@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Office In-Time Tracker</title>
+  <style>
+    body {
+      padding: 20px 15px 120px; /* extra bottom padding for fixed buttons */
+      background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+        "Open Sans", "Helvetica Neue", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      overflow-y: auto;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    /* Container fixed at bottom with padding */
+    .button-container {
+      left: 0;
+      width: 100%;
+      max-width: 400px;
+      padding: 0 15px;
+      display: flex;
+      gap: 12px;
+      box-sizing: border-box;
+      z-index: 100;
+      background: transparent; /* slight white background for contrast */
+      backdrop-filter: blur(8px);
+      margin: 0 auto;
+      right: 0;
+      position: fixed;
+    bottom: 227px;
+    }
+
+    /* Big buttons full width */
+    .round-button,
+    .logout-button {
+      width: 100%;
+      height: 70px;
+      font-size: 22px;
+      font-weight: 700;
+      border-radius: 12px;
+      box-shadow: 4px -4px 0 -3px #fff, -4px 1px #000;
+      user-select: none;
+      border: 2px solid #000;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .round-button:active,
+    .logout-button:active {
+      transform: scale(0.95);
+    }
+
+    .round-button:disabled,
+    .logout-button:disabled {
+      background-color: #ddd;
+      color: #888;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .round-button:active:not(:disabled) {
+      background-color: #6fa4d9;
+    }
+
+    .logout-button:active:not(:disabled) {
+      background-color: #8cdca0;
+    }
+
+    /* Smaller buttons side by side for reset/history */
+    .small-button-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .reset-button,
+    .history-button {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      user-select: none;
+      transition: background-color 0.3s ease;
+      cursor: pointer;
+      border: none;
+      color: white;
+    }
+
+    .reset-button {
+      background-color: #ff3b30;
+    }
+
+    .history-button {
+      background-color: #5856d6;
+    }
+
+    .reset-button:hover {
+      background-color: #cc3026;
+    }
+
+    .history-button:hover {
+      background-color: #3f3dbd;
+    }
+
+    /* Time display moved above buttons */
+    .time-display {
+      margin: 10px 0 25px; /* space for fixed bottom buttons */
+      text-align: center;
+      display: none;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    /* Adjust time-block style as before */
+    .time-block {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #333;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: slideUp 0.6s ease forwards;
+    }
+
+    .label {
+      font-weight: 600;
+      color: #555;
+    }
+
+    /* History panel styling unchanged */
+    #historyPanel {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 400px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+    }
+
+    /* Other existing styles */
+
+    .history-entry {
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+      user-select: none;
+    }
+
+    .history-entry h4 {
+      margin: 0 0 5px;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .history-entry p {
+      margin: 2px 0;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .delete-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #ff3b30;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+      user-select: none;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s ease;
+    }
+
+    .delete-button:hover {
+      background-color: #d32f2f;
+    }
+
+    @keyframes slideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive tweak for smaller devices */
+    @media (max-width: 400px) {
+      .button-container {
+        max-width: 100%;
+        padding: 0 36px;
+      }
+      .round-button,
+      .logout-button {
+        height: 100px;
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>In-Time Tracker</h1>
+
+  <div class="time-display" id="timeDisplay">
+    <div class="time-block">
+      <span class="label">In Time:</span> <span id="inTime">--:--</span>
+    </div>
+    <div class="time-block">
+      <span class="label">Logout Time:</span> <span id="outTime">--:--</span>
+    </div>
+    <div class="time-block">
+      <span class="label">Min Logout (5h):</span> <span id="minLogout">--:--</span>
+    </div>
+    <div class="time-block">
+      <span class="label">Max Logout (6h):</span> <span id="maxLogout">--:--</span>
+    </div>
+  </div>
+
+  
+    <div class="small-button-row">
+      <button class="reset-button" onclick="resetData()">&#x1F504; Reset</button>
+      <button class="history-button" onclick="toggleHistory()">&#x1F552; History</button>
+    </div>
+
+    <div class="button-container">
+    <button class="round-button" id="inBtn" onclick="setInTime()">&#128187; Enter</button>
+    <button class="logout-button" id="outBtn" onclick="setOutTime()">Exit &#128663;</button>
+   </div>
+
+    <div id="historyPanel"></div>
+  
+
+  <script>
+    const display = document.getElementById("timeDisplay");
+    const historyPanel = document.getElementById("historyPanel");
+    const inBtn = document.getElementById("inBtn");
+    const outBtn = document.getElementById("outBtn");
+
+    function formatTime(date) {
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${hours}:${minutes}`;
+    }
+
+    function addHours(date, hrs) {
+      const newDate = new Date(date);
+      newDate.setHours(newDate.getHours() + hrs);
+      return newDate;
+    }
+
+    function getTodayDateString() {
+      const today = new Date();
+      return today.toISOString().split("T")[0]; // yyyy-mm-dd
+    }
+
+    function parseTimeToDate(timeStr, dateStr) {
+      const [h, m] = timeStr.split(":").map(Number);
+      const d = new Date(dateStr);
+      d.setHours(h, m, 0, 0);
+      return d;
+    }
+
+    function diffHoursMinutes(startDate, endDate) {
+      let diffMs = endDate - startDate;
+      if (diffMs < 0) diffMs = 0;
+      const diffMins = Math.floor(diffMs / 60000);
+      const hours = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+      return `${hours}h ${mins}m`;
+    }
+
+    function setInTime() {
+      const now = new Date();
+      const today = getTodayDateString();
+
+      const minTime = addHours(now, 5);
+      const maxTime = addHours(now, 6);
+
+      const data = {
+        date: today,
+        inTime: formatTime(now),
+        outTime: null,
+        minLogout: formatTime(minTime),
+        maxLogout: formatTime(maxTime),
+      };
+
+      localStorage.setItem("officeTimeData", JSON.stringify(data));
+
+      // Save/update history
+      const history = JSON.parse(localStorage.getItem("officeTimeHistory") || "{}");
+      history[today] = data;
+      localStorage.setItem("officeTimeHistory", JSON.stringify(history));
+
+      showTime(data);
+      renderHistory();
+      disableButtons(true, false);
+    }
+
+    function setOutTime() {
+      const now = new Date();
+      const today = getTodayDateString();
+
+      let data = JSON.parse(localStorage.getItem("officeTimeData"));
+      if (!data || data.date !== today) {
+        alert("Please set IN time first for today.");
+        return;
+      }
+      if (data.outTime) {
+        alert("Logout time already set.");
+        return;
+      }
+
+      data.outTime = formatTime(now);
+
+      localStorage.setItem("officeTimeData", JSON.stringify(data));
+
+      // Update history
+      const history = JSON.parse(localStorage.getItem("officeTimeHistory") || "{}");
+      history[today] = data;
+      localStorage.setItem("officeTimeHistory", JSON.stringify(history));
+
+      showTime(data);
+      renderHistory();
+      disableButtons(true, true);
+    }
+
+    function showTime(data) {
+      document.getElementById("inTime").textContent = data.inTime;
+      document.getElementById("outTime").textContent = data.outTime || "--:--";
+      document.getElementById("minLogout").textContent = data.minLogout;
+      document.getElementById("maxLogout").textContent = data.maxLogout;
+      display.style.display = "block";
+
+      document.querySelectorAll(".time-block").forEach((el) => {
+        el.style.animation = "none";
+        el.offsetHeight; // trigger reflow
+        el.style.animation = "slideUp 0.6s ease forwards";
+      });
+    }
+
+    function resetData() {
+      localStorage.removeItem("officeTimeData");
+      display.style.display = "none";
+      document.getElementById("inTime").textContent = "--:--";
+      document.getElementById("outTime").textContent = "--:--";
+      document.getElementById("minLogout").textContent = "--:--";
+      document.getElementById("maxLogout").textContent = "--:--";
+      disableButtons(false, false);
+    }
+
+    function disableButtons(inDisabled, outDisabled) {
+      inBtn.disabled = inDisabled;
+      outBtn.disabled = outDisabled;
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem("officeTimeHistory") || "{}");
+      const entries = Object.entries(history).sort((a, b) => b[0].localeCompare(a[0]));
+
+      if (entries.length === 0) {
+        historyPanel.innerHTML = "<p>No history available.</p>";
+        return;
+      }
+
+      let html = "";
+      function getMinutes(timeStr) {
+  if (!timeStr || timeStr === "--:--") return null;
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+function formatDuration(minutes) {
+  if (minutes == null || minutes < 0) return "--:--";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h}h ${m}m`;
+}
+
+for (const [date, data] of entries) {
+  const inMinutes = getMinutes(data.inTime);
+  const outMinutes = getMinutes(data.outTime);
+  const duration = (inMinutes !== null && outMinutes !== null) ? outMinutes - inMinutes : null;
+  const officeHours = formatDuration(duration);
+
+  html += `
+    <div class="history-entry" data-date="${date}">
+      <h4>${date}</h4>
+      <p><strong>In:</strong> ${data.inTime}</p>
+      <p><strong>Out:</strong> ${data.outTime || "--:--"}</p>
+      <p>Office Hours : ${officeHours}</p>
+      <button class="delete-button" onclick="deleteHistoryEntry('${date}')">Delete</button>
+    </div>
+  `;
+}
+
+      historyPanel.innerHTML = html;
+    }
+
+    function deleteHistoryEntry(date) {
+      const history = JSON.parse(localStorage.getItem("officeTimeHistory") || "{}");
+      if (history[date]) {
+        delete history[date];
+        localStorage.setItem("officeTimeHistory", JSON.stringify(history));
+        if (date === getTodayDateString()) {
+          resetData();
+        }
+        renderHistory();
+      }
+    }
+
+    function toggleHistory() {
+      if (historyPanel.style.display === "block") {
+        historyPanel.style.display = "none";
+      } else {
+        renderHistory();
+        historyPanel.style.display = "block";
+      }
+    }
+
+    // Initialize on page load
+    window.onload = () => {
+      const data = JSON.parse(localStorage.getItem("officeTimeData"));
+      if (data) {
+        showTime(data);
+        disableButtons(true, data.outTime ? true : false);
+      } else {
+        disableButtons(false, false);
+      }
+      historyPanel.style.display = "none";
+    };
+  </script>
+</body>
+</html>
