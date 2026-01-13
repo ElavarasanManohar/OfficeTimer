@@ -1,455 +1,482 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Office In-Time Tracker</title>
+<meta charset="UTF-8">
+<title>Office Log</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- PNG for Safari and iOS -->
-<link rel="icon" type="image/png" href="/favicon.png">
+<!-- Retro Typewriter Font -->
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
 
-<!-- Apple Touch Icon (optional for iOS homescreen bookmarks) -->
-<link rel="apple-touch-icon" href="/favicon.png">
-  <style>
-    body {
-      padding: 50px 15px 120px; /* extra bottom padding for fixed buttons */
-      background: linear-gradient(to bottom, #e0f7fa, #ffffff);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-        "Open Sans", "Helvetica Neue", sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      height: 100vh;
-      overflow-y: auto;
-      margin: 0;
-    }
+<style>
+:root {
+    --bg: #000;
+    --card: #f4f4f4;
+    --ink: #111;
+    --border: #ddd;
+}
 
-    h1 {
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
+* {
+    box-sizing: border-box;
+}
 
-    /* Container fixed at bottom with padding */
-    .button-container {
-      left: 0;
-      width: 100%;
-      max-width: 400px;
-      padding: 0 15px;
-      display: flex;
-      gap: 12px;
-      box-sizing: border-box;
-      z-index: 100;
-      background: transparent; /* slight white background for contrast */
-      backdrop-filter: blur(8px);
-      margin: 0 auto;
-      right: 0;
-      position: fixed;
-    bottom: 111px;
-    }
+body {
+    margin: 0;
+    height: 100vh;
+    background: var(--bg);
+    font-family: monospace;
+    color: var(--ink);
+}
 
-    /* Big buttons full width */
-    .round-button,
-    .logout-button {
-      width: 100%;
-      height: 70px;
-      font-size: 22px;
-      font-weight: 700;
-      border-radius: 12px;
-      box-shadow: 4px -4px 0 -3px #fff, -4px 1px #000;
-      user-select: none;
-      border: 2px solid #000;
-      cursor: pointer;
-      transition: background-color 0.2s ease, transform 0.2s ease;
-    }
+/* PAGE TITLE */
+.page-title {
+    position: fixed;
+    top: 18px;
+    width: 100%;
+    text-align: center;
+    font-family: monospace;
+    color: #f4f4f4;
+    font-size: 22px;
+    letter-spacing: 2px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
 
-    .round-button:active,
-    .logout-button:active {
-      transform: scale(0.95);
-    }
+.page-title p{
+margin: 0 0 0 33px;
+align-self: center;
+}
 
-    .round-button:disabled,
-    .logout-button:disabled {
-      background-color: #ddd;
-      color: #888;
-      cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
-    }
+/* STATUS TEXT */
+.status-text {
+    position: fixed;
+    width: 68%;
+    top: 374px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--card);
+    color: var(--ink);
+    padding: 14px 26px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    font-size: 17px;
+    letter-spacing: 1px;
+    text-align: center;
+}
 
-    .round-button:active:not(:disabled) {
-      background-color: #6fa4d9;
-    }
+/* TOP BAR */
+.history-bar {
+    position: relative;
+    top: 275px;
+    width: 100%;
+    text-align: center;
+    z-index: 10;
+}
 
-    .logout-button:active:not(:disabled) {
-      background-color: #8cdca0;
-    }
+.history-bar button {
+    font-family: inherit;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 12px 22px;
+    border-radius: 14px;
+    font-size: 13px;
+}
 
-    /* Smaller buttons side by side for reset/history */
-    .small-button-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
+/* CLOCK */
+.widget {
+    position: fixed;
+    top: 83px;
+    left: 50%;
+    transform: translateX(-50%);
+}
 
-    .reset-button,
-    .history-button {
-      padding: 14px;
-      font-size: 16px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-      user-select: none;
-      transition: background-color 0.3s ease;
-      cursor: pointer;
-      border: none;
-      color: white;
-    }
+.box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 14px 18px;
+}
 
-    .reset-button {
-      background-color: #ff3b30;
-    }
+.clock {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
 
-    .history-button {
-      background-color: #5856d6;
-    }
+/* SMALL DOTTED CLOCK */
+.digit {
+    display: grid;
+    grid-template-columns: repeat(5, 6px);
+    grid-template-rows: repeat(7, 6px);
+    gap: 3px;
+}
 
-    .reset-button:hover {
-      background-color: #cc3026;
-    }
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: transparent;
+}
 
-    .history-button:hover {
-      background-color: #3f3dbd;
-    }
+.dot.on {
+    background: var(--ink);
+}
 
-    /* Time display moved above buttons */
-    .time-display {
-      margin: 10px 0 25px; /* space for fixed bottom buttons */
-      text-align: center;
-      display: none;
-      max-width: 400px;
-      width: 100%;
-    }
+.colon {
+    display: grid;
+    grid-template-rows: repeat(7, 6px);
+    gap: 3px;
+}
 
-    /* Adjust time-block style as before */
-    .time-block {
-      font-size: 18px;
-      margin-bottom: 12px;
-      color: #333;
-      opacity: 0;
-      transform: translateY(10px);
-      animation: slideUp 0.6s ease forwards;
-    }
+.colon .dot:nth-child(3),
+.colon .dot:nth-child(5) {
+    background: var(--ink);
+}
 
-    .label {
-      font-weight: 600;
-      color: #555;
-    }
+.space {
+    width: 10px;
+}
 
-    /* History panel styling unchanged */
-    #historyPanel {
-      margin-top: 20px;
-      width: 100%;
-      max-width: 400px;
-      border-top: 1px solid #ccc;
-      padding-top: 10px;
-    }
+/* BOTTOM ACTION BAR */
+.bottom-bar {
+    position: fixed;
+    bottom: 54px;
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg);
+}
 
-    /* Other existing styles */
+.bottom-bar button {
+    flex: 1;
+    padding: 26px 32px;
+    font-size: 18px;
+    font-family: inherit;
+    border-radius: 16px;
+    border: none;
+    background: var(--card);
+}
 
-    .history-entry {
-      background: #fff;
-      border-radius: 8px;
-      padding: 10px;
-      margin: 10px 0;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      position: relative;
-      user-select: none;
-    }
+.bottom-bar button:disabled {
+    opacity: 0.35;
+}
 
-    .history-entry h4 {
-      margin: 0 0 5px;
-      font-size: 16px;
-      color: #333;
-    }
+/* HISTORY MODAL */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    z-index: 20;
+}
 
-    .history-entry p {
-      margin: 2px 0;
-      font-size: 14px;
-      color: #555;
-    }
+.modal-content {
+    background: var(--card);
+    margin: 12% auto;
+    padding: 16px;
+    border-radius: 18px;
+    width: 92%;
+    max-height: 75%;
+    overflow-y: auto;
+}
 
-    .delete-button {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background-color: #ff3b30;
-      border: none;
-      color: white;
-      border-radius: 4px;
-      padding: 4px 8px;
-      cursor: pointer;
-      font-size: 12px;
-      user-select: none;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      transition: background-color 0.3s ease;
-    }
+.modal-content h3 {
+    margin-top: 0;
+    text-align: center;
+}
 
-    .delete-button:hover {
-      background-color: #d32f2f;
-    }
+.history-item {
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+}
 
-    @keyframes slideUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+.dateAndShiftTime {
+    position: fixed;
+    top: 195px;
+    width: 100%;
+    text-align: center;
+    font-family: monospace;
+    color: #a09fa7;
+    font-size: 18px;
+    letter-spacing: 1px;
+    display: flex;
+    flex-direction: column;
+    gap:12px;
+}
 
-    /* Responsive tweak for smaller devices */
-    @media (max-width: 400px) {
-      .button-container {
-        max-width: 100%;
-        padding: 0 36px;
-      }
-      .round-button,
-      .logout-button {
-        height: 100px;
-        font-size: 20px;
-      }
-    }
-  </style>
+.date{
+    font-size: 23px;
+}
+
+.img-container {
+    position: fixed;
+    top: 473px;
+    width: 107%;
+    text-align: center;
+    margin-top: 10px;
+    z-index: 15;
+}
+
+.img-container img {
+    width: 280px; /* adjust size as needed */
+    height: auto;
+}
+
+.computer-img-container{
+    text-align: center;
+    z-index: 15;
+    height: 44px;
+}
+
+
+.computer-img-container img{
+    width: 44px; /* adjust size as needed */
+    height: auto;
+}
+
+.entryTimeContainer {
+    position: fixed;
+    top: 416px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2c2d2f;
+    color: #c3c3c3;
+    border-radius: 18px;
+    font-size: 17px;
+    letter-spacing: 1px;
+    text-align: center;
+    width: 382px;
+    z-index: 12;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding: 17px;
+    gap: 10px;
+}
+
+.entryTimeContainer p{
+   margin: 0 0 0 33px;
+align-self: center; 
+}
+
+.entryTimeContainer div{
+    color: #63bc9e;
+}
+
+
+</style>
 </head>
+
 <body>
-  <h1>In-Time Tracker</h1>
 
-  <div class="time-display" id="timeDisplay">
-    <div class="time-block">
-      <span class="label">In Time:</span> <span id="inTime">--:--</span>
+<div class="page-title"><p>OFFICE LOG</p> <!-- Add this inside <body>, above the .page-title div -->
+<div class="computer-img-container">
+    <img src="https://png.pngtree.com/png-vector/20231214/ourmid/pngtree-code-one-thousand-two-four-programmers-day-old-computer-vintage-computer-png-image_11353578.png" alt="computer" />
+</div>
+</div>
+<div class="status-text" id="statusText">Click enter to Log ⬇️</div>
+
+<div class="widget">
+    <div class="box">
+        <div class="clock" id="clock"></div>
     </div>
-    <div class="time-block">
-      <span class="label">Logout Time:</span> <span id="outTime">--:--</span>
+</div>
+
+<div class="history-bar">
+    <button onclick="toggleHistory()">HISTORY</button>
+</div>
+
+<div class="dateAndShiftTime">
+<div class="date"></div>
+<div class="shift">Shift: 01:30 PM - 10:30 PM</div>
+</div>
+
+<div class="entryTimeContainer">
+    <p>Entry time :</p>  <div class="entryTime"></div>
+</div>
+
+<div class="bottom-bar">
+    <button id="enterBtn" onclick="enterOffice()">ENTER</button>
+    <button id="exitBtn" onclick="exitOffice()" disabled>EXIT</button>
+</div>
+
+<div class="modal" id="historyModal" onclick="toggleHistory()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3>OFFICE LOG 🪪</h3>
+        <div id="historyList"></div>
     </div>
-    <div class="time-block">
-      <span class="label">Min Logout (5h):</span> <span id="minLogout">--:--</span>
-    </div>
-    <div class="time-block">
-      <span class="label">Max Logout (6h):</span> <span id="maxLogout">--:--</span>
-    </div>
-  </div>
+</div>
 
-  
-    <div class="small-button-row">
-      <button class="reset-button" onclick="resetData()">&#x1F504; Reset</button>
-      <button class="history-button" onclick="toggleHistory()">&#x1F552; History</button>
-    </div>
+<!-- Add this inside <body>, above the .page-title div -->
+<div class="img-container">
+    <img src="https://png.pngtree.com/png-vector/20230811/ourmid/pngtree-cartoon-typewriter-cartoon-symbol-vector-illustration-background-png-image_6842029.png" alt="Typewriter" />
+</div>
 
-    <div class="button-container">
-    <button class="round-button" id="inBtn" onclick="setInTime()">&#128187; Enter</button>
-    <button class="logout-button" id="outBtn" onclick="setOutTime()">Exit &#128663;</button>
-   </div>
 
-    <div id="historyPanel"></div>
-  
 
-  <script>
-    const display = document.getElementById("timeDisplay");
-    const historyPanel = document.getElementById("historyPanel");
-    const inBtn = document.getElementById("inBtn");
-    const outBtn = document.getElementById("outBtn");
+<script>
+/* ===== CLOCK GLYPHS ===== */
+const GLYPHS = {
+"0":["11111","10001","10001","10001","10001","10001","11111"],
+"1":["00100","01100","00100","00100","00100","00100","01110"],
+"2":["11111","00001","00001","11111","10000","10000","11111"],
+"3":["11111","00001","00001","01111","00001","00001","11111"],
+"4":["10001","10001","10001","11111","00001","00001","00001"],
+"5":["11111","10000","10000","11111","00001","00001","11111"],
+"6":["11111","10000","10000","11111","10001","10001","11111"],
+"7":["11111","00001","00010","00100","00100","00100","00100"],
+"8":["11111","10001","10001","11111","10001","10001","11111"],
+"9":["11111","10001","10001","11111","00001","00001","11111"],
+"A":["01110","10001","10001","11111","10001","10001","10001"],
+"P":["11110","10001","10001","11110","10000","10000","10000"],
+"M":["10001","11011","10101","10101","10001","10001","10001"]
+};
 
-    function formatTime(date) {
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      return `${hours}:${minutes}`;
-    }
-
-    function addHours(date, hrs) {
-      const newDate = new Date(date);
-      newDate.setHours(newDate.getHours() + hrs);
-      return newDate;
-    }
-
-    function getTodayDateString() {
-      const today = new Date();
-      return today.toISOString().split("T")[0]; // yyyy-mm-dd
-    }
-
-    function parseTimeToDate(timeStr, dateStr) {
-      const [h, m] = timeStr.split(":").map(Number);
-      const d = new Date(dateStr);
-      d.setHours(h, m, 0, 0);
-      return d;
-    }
-
-    function diffHoursMinutes(startDate, endDate) {
-      let diffMs = endDate - startDate;
-      if (diffMs < 0) diffMs = 0;
-      const diffMins = Math.floor(diffMs / 60000);
-      const hours = Math.floor(diffMins / 60);
-      const mins = diffMins % 60;
-      return `${hours}h ${mins}m`;
-    }
-
-    function setInTime() {
-      const now = new Date();
-      const today = getTodayDateString();
-
-      const minTime = addHours(now, 5);
-      const maxTime = addHours(now, 6);
-
-      const data = {
-        date: today,
-        inTime: formatTime(now),
-        outTime: null,
-        minLogout: formatTime(minTime),
-        maxLogout: formatTime(maxTime),
-      };
-
-      localStorage.setItem("officeTimeData", JSON.stringify(data));
-
-      // Save/update history
-      const history = JSON.parse(localStorage.getItem("officeTimeHistory") || "{}");
-      history[today] = data;
-      localStorage.setItem("officeTimeHistory", JSON.stringify(history));
-
-      showTime(data);
-      renderHistory();
-      disableButtons(true, false);
-    }
-
-    function setOutTime() {
-      const now = new Date();
-      const today = getTodayDateString();
-
-      let data = JSON.parse(localStorage.getItem("officeTimeData"));
-      if (!data || data.date !== today) {
-        alert("Please set IN time first for today.");
-        return;
-      }
-      if (data.outTime) {
-        alert("Logout time already set.");
-        return;
-      }
-
-      data.outTime = formatTime(now);
-
-      localStorage.setItem("officeTimeData", JSON.stringify(data));
-
-      // Update history
-      const history = JSON.parse(localStorage.getItem("officeTimeHistory") || "{}");
-      history[today] = data;
-      localStorage.setItem("officeTimeHistory", JSON.stringify(history));
-
-      showTime(data);
-      renderHistory();
-      disableButtons(true, true);
-    }
-
-    function showTime(data) {
-      document.getElementById("inTime").textContent = data.inTime;
-      document.getElementById("outTime").textContent = data.outTime || "--:--";
-      document.getElementById("minLogout").textContent = data.minLogout;
-      document.getElementById("maxLogout").textContent = data.maxLogout;
-      display.style.display = "block";
-
-      document.querySelectorAll(".time-block").forEach((el) => {
-        el.style.animation = "none";
-        el.offsetHeight; // trigger reflow
-        el.style.animation = "slideUp 0.6s ease forwards";
-      });
-    }
-
-    function resetData() {
-      localStorage.removeItem("officeTimeData");
-      display.style.display = "none";
-      document.getElementById("inTime").textContent = "--:--";
-      document.getElementById("outTime").textContent = "--:--";
-      document.getElementById("minLogout").textContent = "--:--";
-      document.getElementById("maxLogout").textContent = "--:--";
-      disableButtons(false, false);
-    }
-
-    function disableButtons(inDisabled, outDisabled) {
-      inBtn.disabled = inDisabled;
-      outBtn.disabled = outDisabled;
-    }
-
-    function renderHistory() {
-      const history = JSON.parse(localStorage.getItem("officeTimeHistory") || "{}");
-      const entries = Object.entries(history).sort((a, b) => b[0].localeCompare(a[0]));
-
-      if (entries.length === 0) {
-        historyPanel.innerHTML = "<p>No history available.</p>";
-        return;
-      }
-
-      let html = "";
-      function getMinutes(timeStr) {
-  if (!timeStr || timeStr === "--:--") return null;
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  return hours * 60 + minutes;
-}
-
-function formatDuration(minutes) {
-  if (minutes == null || minutes < 0) return "--:--";
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h}h ${m}m`;
-}
-
-for (const [date, data] of entries) {
-  const inMinutes = getMinutes(data.inTime);
-  const outMinutes = getMinutes(data.outTime);
-  const duration = (inMinutes !== null && outMinutes !== null) ? outMinutes - inMinutes : null;
-  const officeHours = formatDuration(duration);
-
-  html += `
-    <div class="history-entry" data-date="${date}">
-      <h4>${date}</h4>
-      <p><strong>In:</strong> ${data.inTime}</p>
-      <p><strong>Out:</strong> ${data.outTime || "--:--"}</p>
-      <p>Office Hours : ${officeHours}</p>
-      <button class="delete-button" onclick="deleteHistoryEntry('${date}')">Delete</button>
-    </div>
-  `;
-}
-
-      historyPanel.innerHTML = html;
-    }
-
-    function deleteHistoryEntry(date) {
-      const history = JSON.parse(localStorage.getItem("officeTimeHistory") || "{}");
-      if (history[date]) {
-        delete history[date];
-        localStorage.setItem("officeTimeHistory", JSON.stringify(history));
-        if (date === getTodayDateString()) {
-          resetData();
+function createGlyph(char) {
+    if (char === ":") {
+        const c = document.createElement("div");
+        c.className = "colon";
+        for (let i = 0; i < 7; i++) {
+            c.appendChild(document.createElement("div")).className = "dot";
         }
-        renderHistory();
-      }
+        return c;
     }
-
-    function toggleHistory() {
-      if (historyPanel.style.display === "block") {
-        historyPanel.style.display = "none";
-      } else {
-        renderHistory();
-        historyPanel.style.display = "block";
-      }
+    if (char === " ") {
+        const s = document.createElement("div");
+        s.className = "space";
+        return s;
     }
+    const d = document.createElement("div");
+    d.className = "digit";
+    GLYPHS[char].forEach(row =>
+        row.split("").forEach(bit => {
+            const dot = document.createElement("div");
+            dot.className = "dot" + (bit === "1" ? " on" : "");
+            d.appendChild(dot);
+        })
+    );
+    return d;
+}
 
-    // Initialize on page load
-    window.onload = () => {
-      const data = JSON.parse(localStorage.getItem("officeTimeData"));
-      if (data) {
-        showTime(data);
-        disableButtons(true, data.outTime ? true : false);
-      } else {
-        disableButtons(false, false);
-      }
-      historyPanel.style.display = "none";
-    };
-  </script>
+function updateClock() {
+    const clock = document.getElementById("clock");
+    clock.innerHTML = "";
+    const now = new Date();
+    let h = now.getHours();
+    const m = String(now.getMinutes()).padStart(2, "0");
+    const ap = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    [...`${String(h).padStart(2,"0")}:${m} ${ap}`]
+        .forEach(ch => clock.appendChild(createGlyph(ch)));
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+/* ===== OFFICE LOGIC ===== */
+const today = new Date().toISOString().split("T")[0];
+let officeData = JSON.parse(localStorage.getItem("officeData") || "[]");
+
+function formatTime(date) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// New function to format date as "13-Jan-2026"
+function formatDateDMY(dateStr) {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const month = d.toLocaleString('en-US', { month: 'short' });
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+function enterOffice() {
+    localStorage.setItem("todayEnter", Date.now());
+    localStorage.setItem("officeStatus", "IN");
+    document.getElementById("enterBtn").disabled = true;
+    document.getElementById("exitBtn").disabled = false;
+    document.getElementById("statusText").innerText = "🟢 You are IN office";
+}
+
+function exitOffice() {
+    const enter = new Date(parseInt(localStorage.getItem("todayEnter")));
+    const exit = new Date();
+    const mins = Math.floor((exit - enter) / 60000);
+    const hrs = String(Math.floor(mins / 60)).padStart(2, "0");
+    const rem = String(mins % 60).padStart(2, "0");
+
+    officeData.push({
+        date: today,
+        enter: formatTime(enter),
+        exit: formatTime(exit),
+        total: `${hrs}:${rem}`
+    });
+
+    localStorage.setItem("officeData", JSON.stringify(officeData));
+    localStorage.removeItem("todayEnter");
+    localStorage.setItem("officeStatus", "OUT");
+
+    document.getElementById("exitBtn").disabled = true;
+    document.getElementById("statusText").innerText = "Click enter to Log ⬇️";
+}
+
+function toggleHistory() {
+    const modal = document.getElementById("historyModal");
+    modal.style.display = modal.style.display === "block" ? "none" : "block";
+    renderHistory();
+}
+
+function renderHistory() {
+    const list = document.getElementById("historyList");
+    list.innerHTML = "";
+    officeData.slice().reverse().forEach(d => {
+        list.innerHTML += `
+            <div class="history-item">
+                DATE : ${formatDateDMY(d.date)}<br>
+                ENTER: ${d.enter}<br>
+                EXIT : ${d.exit}<br>
+                TOTAL: ${d.total}
+            </div>`;
+    });
+}
+
+function enterOffice() {
+    const now = new Date();
+    localStorage.setItem("todayEnter", now.getTime());
+    localStorage.setItem("officeStatus", "IN");
+    
+    document.getElementById("enterBtn").disabled = true;
+    document.getElementById("exitBtn").disabled = false;
+    document.getElementById("statusText").innerText = "🟢 You are IN office";
+
+    // Show entry time
+    const entryDiv = document.querySelector(".entryTimeContainer");
+    document.querySelector(".entryTime").innerText = formatTime(now);
+}
+
+
+// Show today's date in the "date-MMM-year" format
+document.querySelector('.date').innerText = formatDateDMY(today);
+
+/* RESTORE STATE */
+const status = localStorage.getItem("officeStatus") || "OUT";
+document.getElementById("statusText").innerText =
+    status === "IN" ? "🟢 You are IN office" : "Click enter to Log ⬇️";
+
+if (status === "IN") {
+    document.getElementById("enterBtn").disabled = true;
+    document.getElementById("exitBtn").disabled = false;
+
+    const enterTime = new Date(parseInt(localStorage.getItem("todayEnter")));
+    const entryDiv = document.querySelector(".entryTimeContainer");
+    document.querySelector(".entryTime").innerText = formatTime(enterTime);
+}
+</script>
+
 </body>
 </html>
