@@ -56,25 +56,25 @@ body{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:18px;
-  padding:14px 18px;
+  padding:10px 14px; /* reduced padding */
 }
 
 .clock{
   display:flex;
-  gap:10px;
+  gap:6px; /* tighter spacing */
 }
 
-/* DOT CLOCK */
+/* ===== SMALLER DOT CLOCK ===== */
 .digit{
   display:grid;
-  grid-template-columns:repeat(5,6px);
-  grid-template-rows:repeat(7,6px);
-  gap:3px;
+  grid-template-columns:repeat(5,4px);
+  grid-template-rows:repeat(7,4px);
+  gap:2px;
 }
 
 .dot{
-  width:6px;
-  height:6px;
+  width:4px;
+  height:4px;
   border-radius:50%;
   background:transparent;
 }
@@ -82,18 +82,18 @@ body{
 
 .colon{
   display:grid;
-  grid-template-rows:repeat(7,6px);
-  gap:3px;
+  grid-template-rows:repeat(7,4px);
+  gap:2px;
 }
 .colon .dot:nth-child(3),
 .colon .dot:nth-child(5){background:var(--ink);}
 
-.space{width:10px;}
+.space{width:6px;}
 
 /* DATE */
 .dateAndShiftTime{
   position:fixed;
-  top:160px;
+  top:150px;
   width:100%;
   text-align:center;
   color:#a0a0a0;
@@ -103,7 +103,7 @@ body{
 /* HISTORY BUTTON */
 .history-bar{
   position:fixed;
-  top:230px;
+  top:220px;
   width:100%;
   text-align:center;
 }
@@ -118,7 +118,7 @@ body{
 /* STATUS */
 .status-text{
   position:fixed;
-  top:285px;
+  top:275px;
   left:50%;
   transform:translateX(-50%);
   width:90%;
@@ -133,7 +133,7 @@ body{
 /* ENTRY TIME */
 .entryTimeContainer{
   position:fixed;
-  top:340px;
+  top:330px;
   left:50%;
   transform:translateX(-50%);
   width:90%;
@@ -150,7 +150,7 @@ body{
 /* TYPEWRITER IMAGE */
 .img-container{
   position:fixed;
-  top:400px;
+  top:390px;
   width:100%;
   text-align:center;
 }
@@ -268,7 +268,12 @@ const GLYPHS={
 };
 
 function createGlyph(c){
- if(c===":"){const d=document.createElement("div");d.className="colon";for(let i=0;i<7;i++)d.appendChild(document.createElement("div")).className="dot";return d;}
+ if(c===":"){
+  const d=document.createElement("div");
+  d.className="colon";
+  for(let i=0;i<7;i++)d.appendChild(document.createElement("div")).className="dot";
+  return d;
+ }
  if(c===" "){const s=document.createElement("div");s.className="space";return s;}
  const d=document.createElement("div");d.className="digit";
  GLYPHS[c].forEach(r=>r.split("").forEach(b=>{
@@ -290,6 +295,7 @@ function updateClock(){
 }
 updateClock();setInterval(updateClock,1000);
 
+/* ===== OFFICE LOG ===== */
 const today=new Date().toISOString().split("T")[0];
 let officeData=JSON.parse(localStorage.getItem("officeData")||"[]");
 
@@ -345,5 +351,6 @@ if(localStorage.getItem("officeStatus")==="IN"){
  statusText.innerText="🟢 You are IN office";
 }
 </script>
+
 </body>
 </html>
