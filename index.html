@@ -56,15 +56,15 @@ body{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:18px;
-  padding:10px 14px; /* reduced padding */
+  padding:10px 14px;
 }
 
 .clock{
   display:flex;
-  gap:6px; /* tighter spacing */
+  gap:6px;
 }
 
-/* ===== SMALLER DOT CLOCK ===== */
+/* SMALLER DOT CLOCK */
 .digit{
   display:grid;
   grid-template-columns:repeat(5,4px);
@@ -78,17 +78,25 @@ body{
   border-radius:50%;
   background:transparent;
 }
-.dot.on{background:var(--ink);}
+
+.dot.on{
+  background:var(--ink);
+}
 
 .colon{
   display:grid;
   grid-template-rows:repeat(7,4px);
   gap:2px;
 }
-.colon .dot:nth-child(3),
-.colon .dot:nth-child(5){background:var(--ink);}
 
-.space{width:6px;}
+.colon .dot:nth-child(3),
+.colon .dot:nth-child(5){
+  background:var(--ink);
+}
+
+.space{
+  width:6px;
+}
 
 /* DATE */
 .dateAndShiftTime{
@@ -98,7 +106,10 @@ body{
   text-align:center;
   color:#a0a0a0;
 }
-.date{font-size:20px;}
+
+.date{
+  font-size:20px;
+}
 
 /* HISTORY BUTTON */
 .history-bar{
@@ -149,7 +160,10 @@ body{
 .entryTimeContainer p{
   margin:0;
 }
-.entryTime{color:#63bc9e;}
+
+.entryTime{
+  color:#63bc9e;
+}
 
 /* TYPEWRITER IMAGE */
 .img-container{
@@ -158,7 +172,10 @@ body{
   width:100%;
   text-align:center;
 }
-.img-container img{width:140px;}
+
+.img-container img{
+  width:140px;
+}
 
 /* BOTTOM BAR */
 .bottom-bar{
@@ -178,7 +195,10 @@ body{
   border:none;
   background:var(--card);
 }
-.bottom-bar button:disabled{opacity:0.35;}
+
+.bottom-bar button:disabled{
+  opacity:0.35;
+}
 
 /* MODAL */
 .modal{
@@ -188,21 +208,96 @@ body{
   display:none;
   z-index:20;
 }
+
 .modal-content{
   background:var(--card);
   margin:20% auto;
   padding:16px;
   border-radius:18px;
   width:92%;
-  max-height:70%;
+  max-height:75%;
   overflow-y:auto;
 }
+
 .history-item{
   background:#fff;
   border-radius:14px;
   padding:12px;
   margin-bottom:10px;
   font-size:13px;
+  position:relative;
+}
+
+.history-item button{
+  margin-top:10px;
+  padding:8px 14px;
+  border:none;
+  border-radius:10px;
+  background:#111;
+  color:white;
+  font-family:monospace;
+}
+
+/* EDIT MODAL */
+.edit-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  display:none;
+  z-index:30;
+}
+
+.edit-content{
+  background:var(--card);
+  margin:15% auto;
+  padding:18px;
+  border-radius:18px;
+  width:92%;
+  max-width:420px;
+}
+
+.edit-content h3{
+  margin-top:0;
+}
+
+.edit-content label{
+  display:block;
+  margin-top:12px;
+  margin-bottom:5px;
+  font-size:13px;
+}
+
+.edit-content input{
+  width:100%;
+  padding:12px;
+  border:1px solid #ccc;
+  border-radius:10px;
+  font-family:monospace;
+  font-size:15px;
+}
+
+.edit-buttons{
+  display:flex;
+  gap:10px;
+  margin-top:18px;
+}
+
+.edit-buttons button{
+  flex:1;
+  padding:13px;
+  border:none;
+  border-radius:12px;
+  font-family:monospace;
+  font-size:15px;
+}
+
+.save-edit{
+  background:#111;
+  color:white;
+}
+
+.cancel-edit{
+  background:#ddd;
 }
 </style>
 </head>
@@ -231,7 +326,9 @@ body{
   <button onclick="toggleHistory()">HISTORY</button>
 </div>
 
-<div class="status-text" id="statusText">Click enter to Log ⬇️</div>
+<div class="status-text" id="statusText">
+  Click enter to Log ⬇️
+</div>
 
 <div class="entryTimeContainer">
   <p>Entry time:</p>
@@ -247,6 +344,7 @@ body{
   <button id="exitBtn" onclick="exitOffice()" disabled>EXIT</button>
 </div>
 
+<!-- HISTORY MODAL -->
 <div class="modal" id="historyModal" onclick="toggleHistory()">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h3>OFFICE LOG 🪪</h3>
@@ -254,7 +352,31 @@ body{
   </div>
 </div>
 
+<!-- EDIT MODAL -->
+<div class="edit-modal" id="editModal" onclick="closeEdit()">
+  <div class="edit-content" onclick="event.stopPropagation()">
+
+    <h3>EDIT OFFICE LOG ✏️</h3>
+
+    <label for="editDate">Date</label>
+    <input type="date" id="editDate">
+
+    <label for="editEnter">Enter time</label>
+    <input type="time" id="editEnter">
+
+    <label for="editExit">Exit time</label>
+    <input type="time" id="editExit">
+
+    <div class="edit-buttons">
+      <button class="cancel-edit" onclick="closeEdit()">CANCEL</button>
+      <button class="save-edit" onclick="saveEdit()">SAVE</button>
+    </div>
+
+  </div>
+</div>
+
 <script>
+
 const GLYPHS={
 "0":["11111","10001","10001","10001","10001","10001","11111"],
 "1":["00100","01100","00100","00100","00100","00100","01110"],
@@ -272,88 +394,461 @@ const GLYPHS={
 };
 
 function createGlyph(c){
+
  if(c===":"){
   const d=document.createElement("div");
   d.className="colon";
-  for(let i=0;i<7;i++)d.appendChild(document.createElement("div")).className="dot";
+
+  for(let i=0;i<7;i++){
+    const dot=document.createElement("div");
+    dot.className="dot";
+    d.appendChild(dot);
+  }
+
   return d;
  }
- if(c===" "){const s=document.createElement("div");s.className="space";return s;}
- const d=document.createElement("div");d.className="digit";
- GLYPHS[c].forEach(r=>r.split("").forEach(b=>{
-  const dot=document.createElement("div");
-  dot.className="dot"+(b==="1"?" on":"");
-  d.appendChild(dot);
- }));
+
+ if(c===" "){
+  const s=document.createElement("div");
+  s.className="space";
+  return s;
+ }
+
+ const d=document.createElement("div");
+ d.className="digit";
+
+ GLYPHS[c].forEach(r=>{
+  r.split("").forEach(b=>{
+    const dot=document.createElement("div");
+    dot.className="dot"+(b==="1"?" on":"");
+    d.appendChild(dot);
+  });
+ });
+
  return d;
 }
 
 function updateClock(){
+
  const clock=document.getElementById("clock");
  clock.innerHTML="";
+
  const n=new Date();
- let h=n.getHours(),m=String(n.getMinutes()).padStart(2,"0");
+
+ let h=n.getHours();
+ let m=String(n.getMinutes()).padStart(2,"0");
+
  const ap=h>=12?"PM":"AM";
+
  h=h%12||12;
- [...`${String(h).padStart(2,"0")}:${m} ${ap}`].forEach(c=>clock.appendChild(createGlyph(c)));
-}
-updateClock();setInterval(updateClock,1000);
 
-/* ===== OFFICE LOG ===== */
+ [...`${String(h).padStart(2,"0")}:${m} ${ap}`]
+ .forEach(c=>clock.appendChild(createGlyph(c)));
+}
+
+updateClock();
+setInterval(updateClock,1000);
+
+
+/* =========================
+   OFFICE LOG
+========================= */
+
 const today=new Date().toISOString().split("T")[0];
-let officeData=JSON.parse(localStorage.getItem("officeData")||"[]");
 
-function formatTime(d){return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});}
-function formatDateDMY(ds){
- const d=new Date(ds);
- return `${d.getDate()}-${d.toLocaleString('en',{month:'short'})}-${d.getFullYear()}`;
+/*
+ IMPORTANT:
+ This is the SAME localStorage key used by your old version.
+ No migration or new storage is being used.
+*/
+let officeData=JSON.parse(
+ localStorage.getItem("officeData") || "[]"
+);
+
+function formatTime(d){
+
+ return d.toLocaleTimeString([],{
+  hour:'2-digit',
+  minute:'2-digit'
+ });
+
 }
+
+function formatDateDMY(ds){
+
+ const d=new Date(ds);
+
+ return `${d.getDate()}-${d.toLocaleString('en',{
+   month:'short'
+ })}-${d.getFullYear()}`;
+
+}
+
+
+/* Convert HH:MM to minutes */
+function timeToMinutes(time){
+
+ const parts=time.split(":");
+
+ return Number(parts[0])*60 + Number(parts[1]);
+
+}
+
+
+/* Calculate total between enter and exit */
+function calculateTotal(enter,exit){
+
+ let enterMinutes=timeToMinutes(enter);
+ let exitMinutes=timeToMinutes(exit);
+
+ /*
+  If exit is earlier than enter,
+  assume the shift crossed midnight.
+ */
+ if(exitMinutes < enterMinutes){
+   exitMinutes += 24*60;
+ }
+
+ const mins=exitMinutes-enterMinutes;
+
+ return `${String(Math.floor(mins/60)).padStart(2,"0")}:${String(mins%60).padStart(2,"0")}`;
+
+}
+
+
+/* =========================
+   ENTER
+========================= */
 
 function enterOffice(){
+
  const now=new Date();
- localStorage.setItem("todayEnter",now.getTime());
- localStorage.setItem("officeStatus","IN");
- enterBtn.disabled=true; exitBtn.disabled=false;
+
+ localStorage.setItem(
+   "todayEnter",
+   now.getTime()
+ );
+
+ localStorage.setItem(
+   "officeStatus",
+   "IN"
+ );
+
+ enterBtn.disabled=true;
+ exitBtn.disabled=false;
+
  statusText.innerText="🟢 You are IN office";
- document.querySelector(".entryTime").innerText=formatTime(now);
+
+ document.querySelector(".entryTime").innerText=
+   formatTime(now);
+
 }
+
+
+/* =========================
+   EXIT
+========================= */
 
 function exitOffice(){
- const enter=new Date(+localStorage.getItem("todayEnter"));
+
+ const enter=new Date(
+   +localStorage.getItem("todayEnter")
+ );
+
  const exit=new Date();
- const mins=Math.floor((exit-enter)/60000);
+
+ const mins=Math.floor(
+   (exit-enter)/60000
+ );
+
  officeData.push({
-  date:today,
-  enter:formatTime(enter),
-  exit:formatTime(exit),
-  total:`${String(Math.floor(mins/60)).padStart(2,"0")}:${String(mins%60).padStart(2,"0")}`
+
+   date:today,
+
+   enter:formatTime(enter),
+
+   exit:formatTime(exit),
+
+   total:
+     `${String(Math.floor(mins/60)).padStart(2,"0")}:${String(mins%60).padStart(2,"0")}`
+
  });
- localStorage.setItem("officeData",JSON.stringify(officeData));
- localStorage.setItem("officeStatus","OUT");
- localStorage.removeItem("todayEnter");
- enterBtn.disabled=false; exitBtn.disabled=true;
+
+ /*
+  SAME old storage.
+ */
+ localStorage.setItem(
+   "officeData",
+   JSON.stringify(officeData)
+ );
+
+ localStorage.setItem(
+   "officeStatus",
+   "OUT"
+ );
+
+ localStorage.removeItem(
+   "todayEnter"
+ );
+
+ enterBtn.disabled=false;
+ exitBtn.disabled=true;
+
  statusText.innerText="Click enter to Log ⬇️";
+
 }
+
+
+/* =========================
+   HISTORY
+========================= */
 
 function toggleHistory(){
- historyModal.style.display=historyModal.style.display==="block"?"none":"block";
- historyList.innerHTML="";
- officeData.slice().reverse().forEach(d=>{
-  historyList.innerHTML+=`<div class="history-item">
-  DATE: ${formatDateDMY(d.date)}<br>
-  ENTER: ${d.enter}<br>
-  EXIT: ${d.exit}<br>
-  TOTAL: ${d.total}</div>`;
- });
+
+ historyModal.style.display=
+   historyModal.style.display==="block"
+   ?"none"
+   :"block";
+
+ renderHistory();
+
 }
 
-document.querySelector(".date").innerText=formatDateDMY(today);
+
+/* =========================
+   RENDER HISTORY
+========================= */
+
+function renderHistory(){
+
+ historyList.innerHTML="";
+
+ if(officeData.length===0){
+
+   historyList.innerHTML=
+     "<p>No office records yet.</p>";
+
+   return;
+ }
+
+ officeData.slice().reverse().forEach((d,index)=>{
+
+   /*
+    Because the array is reversed,
+    calculate the real array index.
+   */
+   const realIndex=
+     officeData.length-1-index;
+
+   historyList.innerHTML+=`
+
+   <div class="history-item">
+
+     DATE: ${formatDateDMY(d.date)}<br>
+
+     ENTER: ${d.enter}<br>
+
+     EXIT: ${d.exit}<br>
+
+     TOTAL: ${d.total}
+
+     <br>
+
+     <button onclick="openEdit(${realIndex})">
+       ✏️ EDIT
+     </button>
+
+   </div>
+
+   `;
+
+ });
+
+}
+
+
+/* =========================
+   OPEN EDIT
+========================= */
+
+let editingIndex=null;
+
+function openEdit(index){
+
+ editingIndex=index;
+
+ const record=officeData[index];
+
+ /*
+  Existing old records already contain
+  date, enter and exit.
+ */
+ document.getElementById("editDate").value=
+   record.date || "";
+
+ document.getElementById("editEnter").value=
+   convertTo24Hour(record.enter);
+
+ document.getElementById("editExit").value=
+   convertTo24Hour(record.exit);
+
+ editModal.style.display="block";
+
+}
+
+
+/* =========================
+   CONVERT 12-HOUR TIME
+   TO HTML TIME FORMAT
+========================= */
+
+function convertTo24Hour(time){
+
+ if(!time) return "";
+
+ /*
+  If an old/custom record is already HH:MM,
+  use it directly.
+ */
+ if(!time.includes("AM") && !time.includes("PM")){
+   return time;
+ }
+
+ const parts=time.trim().split(" ");
+
+ const hm=parts[0];
+ const ampm=parts[1];
+
+ let [hours,minutes]=hm.split(":").map(Number);
+
+ if(ampm==="PM" && hours!==12){
+   hours+=12;
+ }
+
+ if(ampm==="AM" && hours===12){
+   hours=0;
+ }
+
+ return `${String(hours).padStart(2,"0")}:${String(minutes).padStart(2,"0")}`;
+
+}
+
+
+/* =========================
+   CONVERT 24-HOUR TIME
+   TO DISPLAY TIME
+========================= */
+
+function convertTo12Hour(time){
+
+ const [hours,minutes]=time.split(":").map(Number);
+
+ const ampm=hours>=12?"PM":"AM";
+
+ let h=hours%12||12;
+
+ return `${String(h).padStart(2,"0")}:${String(minutes).padStart(2,"0")} ${ampm}`;
+
+}
+
+
+/* =========================
+   SAVE EDIT
+========================= */
+
+function saveEdit(){
+
+ if(editingIndex===null){
+   return;
+ }
+
+ const date=
+   document.getElementById("editDate").value;
+
+ const enter=
+   document.getElementById("editEnter").value;
+
+ const exit=
+   document.getElementById("editExit").value;
+
+ if(!date || !enter || !exit){
+
+   alert("Please enter date, enter time and exit time.");
+
+   return;
+ }
+
+ /*
+  Update the EXISTING object.
+  No new storage structure is created.
+ */
+ officeData[editingIndex].date=date;
+
+ officeData[editingIndex].enter=
+   convertTo12Hour(enter);
+
+ officeData[editingIndex].exit=
+   convertTo12Hour(exit);
+
+ officeData[editingIndex].total=
+   calculateTotal(enter,exit);
+
+ /*
+  Save back to the SAME localStorage key.
+ */
+ localStorage.setItem(
+   "officeData",
+   JSON.stringify(officeData)
+ );
+
+ editingIndex=null;
+
+ closeEdit();
+
+ renderHistory();
+
+}
+
+
+/* =========================
+   CLOSE EDIT
+========================= */
+
+function closeEdit(){
+
+ editModal.style.display="none";
+
+ editingIndex=null;
+
+}
+
+
+/* =========================
+   CURRENT STATUS
+========================= */
+
+document.querySelector(".date").innerText=
+ formatDateDMY(today);
+
 
 if(localStorage.getItem("officeStatus")==="IN"){
- enterBtn.disabled=true; exitBtn.disabled=false;
- document.querySelector(".entryTime").innerText=formatTime(new Date(+localStorage.getItem("todayEnter")));
- statusText.innerText="🟢 You are IN office";
+
+ enterBtn.disabled=true;
+
+ exitBtn.disabled=false;
+
+ document.querySelector(".entryTime").innerText=
+   formatTime(
+     new Date(
+       +localStorage.getItem("todayEnter")
+     )
+   );
+
+ statusText.innerText=
+   "🟢 You are IN office";
+
 }
+
 </script>
 
 </body>
