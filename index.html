@@ -154,7 +154,9 @@ body{
   border-radius:18px;
   display:flex;
   justify-content:center;
+  align-items:center;
   gap:10px;
+  flex-wrap:wrap;
 }
 
 .entryTimeContainer p{
@@ -163,6 +165,11 @@ body{
 
 .entryTime{
   color:#63bc9e;
+}
+
+.timeSpent{
+  color:#f0c674;
+  font-weight:bold;
 }
 
 /* TYPEWRITER IMAGE */
@@ -183,21 +190,27 @@ body{
   bottom:20px;
   width:100%;
   display:flex;
-  gap:10px;
+  gap:8px;
   padding:10px;
 }
 
 .bottom-bar button{
   flex:1;
-  padding:18px;
-  font-size:16px;
+  padding:18px 8px;
+  font-size:15px;
   border-radius:16px;
   border:none;
   background:var(--card);
+  font-family:monospace;
 }
 
 .bottom-bar button:disabled{
   opacity:0.35;
+}
+
+/* MAIL BUTTON */
+.mail-btn{
+  background:#d9ead3 !important;
 }
 
 /* MODAL */
@@ -217,6 +230,17 @@ body{
   width:92%;
   max-height:75%;
   overflow-y:auto;
+}
+
+.history-week{
+  margin-top:20px;
+  margin-bottom:12px;
+  padding:10px;
+  background:#111;
+  color:#fff;
+  border-radius:12px;
+  font-weight:bold;
+  text-align:center;
 }
 
 .history-item{
@@ -299,6 +323,79 @@ body{
 .cancel-edit{
   background:#ddd;
 }
+
+/* MAIL MODAL */
+.mail-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  display:none;
+  z-index:40;
+}
+
+.mail-content{
+  background:var(--card);
+  margin:25% auto;
+  padding:18px;
+  border-radius:18px;
+  width:92%;
+  max-width:420px;
+}
+
+.mail-content h3{
+  margin-top:0;
+}
+
+.mail-content p{
+  font-size:13px;
+  color:#555;
+}
+
+.mail-content input{
+  width:100%;
+  padding:13px;
+  border:1px solid #ccc;
+  border-radius:10px;
+  font-family:monospace;
+  font-size:15px;
+}
+
+.mail-buttons{
+  display:flex;
+  gap:10px;
+  margin-top:18px;
+}
+
+.mail-buttons button{
+  flex:1;
+  padding:13px;
+  border:none;
+  border-radius:12px;
+  font-family:monospace;
+  font-size:15px;
+}
+
+.mail-cancel{
+  background:#ddd;
+}
+
+.mail-submit{
+  background:#111;
+  color:white;
+}
+
+@media(max-width:380px){
+
+  .bottom-bar button{
+    font-size:13px;
+    padding:16px 5px;
+  }
+
+  .entryTimeContainer{
+    font-size:13px;
+  }
+
+}
 </style>
 </head>
 
@@ -331,8 +428,17 @@ body{
 </div>
 
 <div class="entryTimeContainer">
+
   <p>Entry time:</p>
+
   <div class="entryTime"></div>
+
+  <span>|</span>
+
+  <p>Spent:</p>
+
+  <div class="timeSpent">00:00</div>
+
 </div>
 
 <div class="img-container">
@@ -340,102 +446,205 @@ body{
 </div>
 
 <div class="bottom-bar">
-  <button id="enterBtn" onclick="enterOffice()">ENTER</button>
-  <button id="exitBtn" onclick="exitOffice()" disabled>EXIT</button>
+
+  <button id="enterBtn" onclick="enterOffice()">
+    ENTER
+  </button>
+
+  <button id="exitBtn" onclick="exitOffice()" disabled>
+    EXIT
+  </button>
+
+  <button class="mail-btn" onclick="openMailModal()">
+    📧 MAIL IT
+  </button>
+
 </div>
+
 
 <!-- HISTORY MODAL -->
+
 <div class="modal" id="historyModal" onclick="toggleHistory()">
+
   <div class="modal-content" onclick="event.stopPropagation()">
+
     <h3>OFFICE LOG 🪪</h3>
+
     <div id="historyList"></div>
+
   </div>
+
 </div>
 
+
 <!-- EDIT MODAL -->
+
 <div class="edit-modal" id="editModal" onclick="closeEdit()">
+
   <div class="edit-content" onclick="event.stopPropagation()">
 
     <h3>EDIT OFFICE LOG ✏️</h3>
 
     <label for="editDate">Date</label>
+
     <input type="date" id="editDate">
 
     <label for="editEnter">Enter time</label>
+
     <input type="time" id="editEnter">
 
     <label for="editExit">Exit time</label>
+
     <input type="time" id="editExit">
 
     <div class="edit-buttons">
-      <button class="cancel-edit" onclick="closeEdit()">CANCEL</button>
-      <button class="save-edit" onclick="saveEdit()">SAVE</button>
+
+      <button class="cancel-edit" onclick="closeEdit()">
+        CANCEL
+      </button>
+
+      <button class="save-edit" onclick="saveEdit()">
+        SAVE
+      </button>
+
     </div>
 
   </div>
+
 </div>
+
+
+<!-- MAIL MODAL -->
+
+<div class="mail-modal" id="mailModal" onclick="closeMailModal()">
+
+  <div class="mail-content" onclick="event.stopPropagation()">
+
+    <h3>MAIL OFFICE HISTORY 📧</h3>
+
+    <p>
+      Enter the email address where you want to send the office history.
+    </p>
+
+    <input
+      type="email"
+      id="mailAddress"
+      placeholder="example@email.com"
+    >
+
+    <div class="mail-buttons">
+
+      <button class="mail-cancel" onclick="closeMailModal()">
+        CANCEL
+      </button>
+
+      <button class="mail-submit" onclick="sendHistoryByMail()">
+        SUBMIT
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
 
 <script>
 
 const GLYPHS={
+
 "0":["11111","10001","10001","10001","10001","10001","11111"],
+
 "1":["00100","01100","00100","00100","00100","00100","01110"],
+
 "2":["11111","00001","00001","11111","10000","10000","11111"],
+
 "3":["11111","00001","00001","01111","00001","00001","11111"],
+
 "4":["10001","10001","10001","11111","00001","00001","00001"],
+
 "5":["11111","10000","10000","11111","00001","00001","11111"],
+
 "6":["11111","10000","10000","11111","10001","10001","11111"],
+
 "7":["11111","00001","00010","00100","00100","00100","00100"],
+
 "8":["11111","10001","10001","11111","10001","10001","11111"],
+
 "9":["11111","10001","10001","11111","00001","00001","11111"],
+
 "A":["01110","10001","10001","11111","10001","10001","10001"],
+
 "P":["11110","10001","10001","11110","10000","10000","10000"],
+
 "M":["10001","11011","10101","10101","10001","10001","10001"]
+
 };
+
 
 function createGlyph(c){
 
  if(c===":"){
+
   const d=document.createElement("div");
+
   d.className="colon";
 
   for(let i=0;i<7;i++){
+
     const dot=document.createElement("div");
+
     dot.className="dot";
+
     d.appendChild(dot);
+
   }
 
   return d;
  }
 
  if(c===" "){
+
   const s=document.createElement("div");
+
   s.className="space";
+
   return s;
  }
 
  const d=document.createElement("div");
+
  d.className="digit";
 
  GLYPHS[c].forEach(r=>{
+
   r.split("").forEach(b=>{
+
     const dot=document.createElement("div");
+
     dot.className="dot"+(b==="1"?" on":"");
+
     d.appendChild(dot);
+
   });
+
  });
 
  return d;
+
 }
+
 
 function updateClock(){
 
  const clock=document.getElementById("clock");
+
  clock.innerHTML="";
 
  const n=new Date();
 
  let h=n.getHours();
+
  let m=String(n.getMinutes()).padStart(2,"0");
 
  const ap=h>=12?"PM":"AM";
@@ -443,10 +652,13 @@ function updateClock(){
  h=h%12||12;
 
  [...`${String(h).padStart(2,"0")}:${m} ${ap}`]
+
  .forEach(c=>clock.appendChild(createGlyph(c)));
+
 }
 
 updateClock();
+
 setInterval(updateClock,1000);
 
 
@@ -454,29 +666,42 @@ setInterval(updateClock,1000);
    OFFICE LOG
 ========================= */
 
-const today=new Date().toISOString().split("T")[0];
 
 /*
  IMPORTANT:
- This is the SAME localStorage key used by your old version.
- No migration or new storage is being used.
+
+ DO NOT CHANGE THESE STORAGE KEYS.
+
+ Existing browser data continues using:
+
+ officeData
+ todayEnter
+ officeStatus
 */
+
+const today=new Date().toISOString().split("T")[0];
+
 let officeData=JSON.parse(
  localStorage.getItem("officeData") || "[]"
 );
 
+
 function formatTime(d){
 
  return d.toLocaleTimeString([],{
-  hour:'2-digit',
-  minute:'2-digit'
+
+   hour:'2-digit',
+
+   minute:'2-digit'
+
  });
 
 }
 
+
 function formatDateDMY(ds){
 
- const d=new Date(ds);
+ const d=new Date(ds+"T00:00:00");
 
  return `${d.getDate()}-${d.toLocaleString('en',{
    month:'short'
@@ -485,7 +710,10 @@ function formatDateDMY(ds){
 }
 
 
-/* Convert HH:MM to minutes */
+/* =========================
+   TIME CALCULATIONS
+========================= */
+
 function timeToMinutes(time){
 
  const parts=time.split(":");
@@ -495,23 +723,113 @@ function timeToMinutes(time){
 }
 
 
-/* Calculate total between enter and exit */
 function calculateTotal(enter,exit){
 
  let enterMinutes=timeToMinutes(enter);
+
  let exitMinutes=timeToMinutes(exit);
 
- /*
-  If exit is earlier than enter,
-  assume the shift crossed midnight.
- */
  if(exitMinutes < enterMinutes){
+
    exitMinutes += 24*60;
+
  }
 
  const mins=exitMinutes-enterMinutes;
 
  return `${String(Math.floor(mins/60)).padStart(2,"0")}:${String(mins%60).padStart(2,"0")}`;
+
+}
+
+
+/*
+ Calculate live time spent from
+ the actual timestamp saved when
+ ENTER was clicked.
+*/
+
+function calculateLiveTime(){
+
+ const storedEnter=
+   localStorage.getItem("todayEnter");
+
+ if(!storedEnter){
+
+   return "00:00";
+
+ }
+
+ const enter=Number(storedEnter);
+
+ const now=Date.now();
+
+ const mins=Math.max(
+   0,
+   Math.floor((now-enter)/60000)
+ );
+
+ return `${String(Math.floor(mins/60)).padStart(2,"0")}:${String(mins%60).padStart(2,"0")}`;
+
+}
+
+
+/* =========================
+   LIVE ENTRY TIMER
+========================= */
+
+let liveTimer=null;
+
+
+function updateLiveEntryTime(){
+
+ if(localStorage.getItem("officeStatus")!=="IN"){
+
+   document.querySelector(".timeSpent").innerText="00:00";
+
+   return;
+
+ }
+
+ document.querySelector(".timeSpent").innerText=
+   calculateLiveTime();
+
+}
+
+
+/*
+ Updates every second.
+
+ This means refreshing the browser
+ does NOT reset the timer.
+*/
+
+function startLiveTimer(){
+
+ if(liveTimer){
+
+   clearInterval(liveTimer);
+
+ }
+
+ updateLiveEntryTime();
+
+ liveTimer=setInterval(
+   updateLiveEntryTime,
+   1000
+ );
+
+}
+
+
+function stopLiveTimer(){
+
+ if(liveTimer){
+
+   clearInterval(liveTimer);
+
+   liveTimer=null;
+
+ }
 
 }
 
@@ -524,23 +842,36 @@ function enterOffice(){
 
  const now=new Date();
 
+ /*
+  SAME existing key.
+ */
  localStorage.setItem(
    "todayEnter",
    now.getTime()
  );
 
+ /*
+  SAME existing key.
+ */
  localStorage.setItem(
    "officeStatus",
    "IN"
  );
 
  enterBtn.disabled=true;
+
  exitBtn.disabled=false;
 
- statusText.innerText="🟢 You are IN office";
+ statusText.innerText=
+   "🟢 You are IN office";
 
  document.querySelector(".entryTime").innerText=
    formatTime(now);
+
+ document.querySelector(".timeSpent").innerText=
+   "00:00";
+
+ startLiveTimer();
 
 }
 
@@ -551,8 +882,19 @@ function enterOffice(){
 
 function exitOffice(){
 
+ const storedEnter=
+   localStorage.getItem("todayEnter");
+
+ if(!storedEnter){
+
+   alert("Entry time not found.");
+
+   return;
+
+ }
+
  const enter=new Date(
-   +localStorage.getItem("todayEnter")
+   Number(storedEnter)
  );
 
  const exit=new Date();
@@ -575,13 +917,16 @@ function exitOffice(){
  });
 
  /*
-  SAME old storage.
+  SAME existing storage.
  */
  localStorage.setItem(
    "officeData",
    JSON.stringify(officeData)
  );
 
+ /*
+  SAME existing status storage.
+ */
  localStorage.setItem(
    "officeStatus",
    "OUT"
@@ -592,9 +937,16 @@ function exitOffice(){
  );
 
  enterBtn.disabled=false;
+
  exitBtn.disabled=true;
 
- statusText.innerText="Click enter to Log ⬇️";
+ statusText.innerText=
+   "Click enter to Log ⬇️";
+
+ document.querySelector(".timeSpent").innerText=
+   "00:00";
+
+ stopLiveTimer();
 
 }
 
@@ -616,6 +968,58 @@ function toggleHistory(){
 
 
 /* =========================
+   WEEK CALCULATION
+========================= */
+
+
+/*
+ Monday = start of week.
+*/
+
+function getWeekStart(dateString){
+
+ const d=new Date(dateString+"T00:00:00");
+
+ const day=d.getDay();
+
+ const diff=day===0 ? -6 : 1-day;
+
+ d.setDate(d.getDate()+diff);
+
+ return d;
+
+}
+
+
+function getWeekKey(dateString){
+
+ const d=getWeekStart(dateString);
+
+ return d.toISOString().split("T")[0];
+
+}
+
+
+function formatWeekHeading(dateString){
+
+ const start=getWeekStart(dateString);
+
+ const end=new Date(start);
+
+ end.setDate(start.getDate()+6);
+
+ const startText=
+   `${start.getDate()} ${start.toLocaleString('en',{month:'short'})} ${start.getFullYear()}`;
+
+ const endText=
+   `${end.getDate()} ${end.toLocaleString('en',{month:'short'})} ${end.getFullYear()}`;
+
+ return `WEEK: ${startText} - ${endText}`;
+
+}
+
+
+/* =========================
    RENDER HISTORY
 ========================= */
 
@@ -629,38 +1033,94 @@ function renderHistory(){
      "<p>No office records yet.</p>";
 
    return;
+
  }
 
- officeData.slice().reverse().forEach((d,index)=>{
 
-   /*
-    Because the array is reversed,
-    calculate the real array index.
-   */
-   const realIndex=
-     officeData.length-1-index;
+ /*
+  Group existing records by week.
+
+  No records are modified.
+ */
+
+ const grouped={};
+
+ officeData.forEach((record,index)=>{
+
+   const weekKey=getWeekKey(record.date);
+
+   if(!grouped[weekKey]){
+
+     grouped[weekKey]=[];
+
+   }
+
+   grouped[weekKey].push({
+
+     record:record,
+
+     index:index
+
+   });
+
+ });
+
+
+ /*
+  Newest week first.
+ */
+
+ const weekKeys=
+   Object.keys(grouped).sort().reverse();
+
+
+ weekKeys.forEach(weekKey=>{
 
    historyList.innerHTML+=`
 
-   <div class="history-item">
-
-     DATE: ${formatDateDMY(d.date)}<br>
-
-     ENTER: ${d.enter}<br>
-
-     EXIT: ${d.exit}<br>
-
-     TOTAL: ${d.total}
-
-     <br>
-
-     <button onclick="openEdit(${realIndex})">
-       ✏️ EDIT
-     </button>
-
-   </div>
+     <div class="history-week">
+       ${formatWeekHeading(weekKey)}
+     </div>
 
    `;
+
+
+   /*
+    Newest record first inside each week.
+   */
+
+   grouped[weekKey]
+   .slice()
+   .reverse()
+   .forEach(item=>{
+
+     const d=item.record;
+
+     const realIndex=item.index;
+
+     historyList.innerHTML+=`
+
+       <div class="history-item">
+
+         DATE: ${formatDateDMY(d.date)}<br>
+
+         ENTER: ${d.enter}<br>
+
+         EXIT: ${d.exit}<br>
+
+         TOTAL: ${d.total}
+
+         <br>
+
+         <button onclick="openEdit(${realIndex})">
+           ✏️ EDIT
+         </button>
+
+       </div>
+
+     `;
+
+   });
 
  });
 
@@ -673,16 +1133,13 @@ function renderHistory(){
 
 let editingIndex=null;
 
+
 function openEdit(index){
 
  editingIndex=index;
 
  const record=officeData[index];
 
- /*
-  Existing old records already contain
-  date, enter and exit.
- */
  document.getElementById("editDate").value=
    record.date || "";
 
@@ -699,34 +1156,36 @@ function openEdit(index){
 
 /* =========================
    CONVERT 12-HOUR TIME
-   TO HTML TIME FORMAT
 ========================= */
 
 function convertTo24Hour(time){
 
  if(!time) return "";
 
- /*
-  If an old/custom record is already HH:MM,
-  use it directly.
- */
  if(!time.includes("AM") && !time.includes("PM")){
+
    return time;
+
  }
 
  const parts=time.trim().split(" ");
 
  const hm=parts[0];
+
  const ampm=parts[1];
 
  let [hours,minutes]=hm.split(":").map(Number);
 
  if(ampm==="PM" && hours!==12){
+
    hours+=12;
+
  }
 
  if(ampm==="AM" && hours===12){
+
    hours=0;
+
  }
 
  return `${String(hours).padStart(2,"0")}:${String(minutes).padStart(2,"0")}`;
@@ -735,8 +1194,7 @@ function convertTo24Hour(time){
 
 
 /* =========================
-   CONVERT 24-HOUR TIME
-   TO DISPLAY TIME
+   CONVERT 24-HOUR TO 12-HOUR
 ========================= */
 
 function convertTo12Hour(time){
@@ -759,7 +1217,9 @@ function convertTo12Hour(time){
 function saveEdit(){
 
  if(editingIndex===null){
+
    return;
+
  }
 
  const date=
@@ -773,15 +1233,19 @@ function saveEdit(){
 
  if(!date || !enter || !exit){
 
-   alert("Please enter date, enter time and exit time.");
+   alert(
+     "Please enter date, enter time and exit time."
+   );
 
    return;
+
  }
 
+
  /*
-  Update the EXISTING object.
-  No new storage structure is created.
+  Update the SAME existing record.
  */
+
  officeData[editingIndex].date=date;
 
  officeData[editingIndex].enter=
@@ -793,9 +1257,11 @@ function saveEdit(){
  officeData[editingIndex].total=
    calculateTotal(enter,exit);
 
+
  /*
-  Save back to the SAME localStorage key.
+  SAME officeData localStorage key.
  */
+
  localStorage.setItem(
    "officeData",
    JSON.stringify(officeData)
@@ -837,15 +1303,258 @@ if(localStorage.getItem("officeStatus")==="IN"){
 
  exitBtn.disabled=false;
 
- document.querySelector(".entryTime").innerText=
-   formatTime(
-     new Date(
-       +localStorage.getItem("todayEnter")
-     )
-   );
+ const storedEnter=
+   localStorage.getItem("todayEnter");
+
+ if(storedEnter){
+
+   document.querySelector(".entryTime").innerText=
+     formatTime(
+       new Date(Number(storedEnter))
+     );
+
+   document.querySelector(".timeSpent").innerText=
+     calculateLiveTime();
+
+ }
 
  statusText.innerText=
    "🟢 You are IN office";
+
+ startLiveTimer();
+
+}
+
+
+/* =========================
+   MAIL HISTORY
+========================= */
+
+function openMailModal(){
+
+ document.getElementById("mailModal").style.display="block";
+
+ document.getElementById("mailAddress").value="";
+
+ setTimeout(()=>{
+
+   document.getElementById("mailAddress").focus();
+
+ },100);
+
+}
+
+
+function closeMailModal(){
+
+ document.getElementById("mailModal").style.display="none";
+
+}
+
+
+/* =========================
+   CREATE HISTORY TEXT
+========================= */
+
+function createHistoryText(){
+
+ if(officeData.length===0){
+
+   return "OFFICE LOG\n\nNo office records yet.";
+
+ }
+
+
+ const grouped={};
+
+
+ officeData.forEach(record=>{
+
+   const weekKey=getWeekKey(record.date);
+
+   if(!grouped[weekKey]){
+
+     grouped[weekKey]=[];
+
+   }
+
+   grouped[weekKey].push(record);
+
+ });
+
+
+ const weekKeys=
+   Object.keys(grouped).sort().reverse();
+
+
+ let text="OFFICE LOG\n";
+
+ text+="==============================\n\n";
+
+
+ weekKeys.forEach(weekKey=>{
+
+   text+=formatWeekHeading(weekKey);
+
+   text+="\n";
+
+   text+="------------------------------\n";
+
+
+   grouped[weekKey]
+   .slice()
+   .reverse()
+   .forEach(record=>{
+
+     text+=
+       `DATE : ${formatDateDMY(record.date)}\n`;
+
+     text+=
+       `ENTER: ${record.enter}\n`;
+
+     text+=
+       `EXIT : ${record.exit}\n`;
+
+     text+=
+       `TOTAL: ${record.total}\n`;
+
+     text+="\n";
+
+   });
+
+   text+="\n";
+
+ });
+
+
+ return text;
+
+}
+
+
+/* =========================
+   MAIL IT
+========================= */
+
+async function sendHistoryByMail(){
+
+ const email=
+   document.getElementById("mailAddress")
+   .value
+   .trim();
+
+
+ if(!email){
+
+   alert("Please enter an email address.");
+
+   return;
+
+ }
+
+
+ /*
+  Basic email validation.
+ */
+
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+
+   alert("Please enter a valid email address.");
+
+   return;
+
+ }
+
+
+ const historyText=
+   createHistoryText();
+
+
+ /*
+  Create a real TXT attachment.
+ */
+
+ const file=new File(
+
+   [historyText],
+
+   "office-history.txt",
+
+   {
+     type:"text/plain"
+   }
+
+ );
+
+
+ /*
+  Modern phones/browsers can share the
+  generated file directly to Mail.
+
+  This is the only browser-safe way to
+  provide an actual attachment without
+  a backend/server.
+ */
+
+ if(
+   navigator.share &&
+   navigator.canShare &&
+   navigator.canShare({
+     files:[file]
+   })
+ ){
+
+   try{
+
+     await navigator.share({
+
+       title:"Office History",
+
+       text:
+         `Office history for ${email}`,
+
+       files:[file]
+
+     });
+
+     closeMailModal();
+
+     return;
+
+   }catch(error){
+
+     /*
+      User cancelled the share sheet.
+     */
+
+     if(error.name==="AbortError"){
+
+       return;
+
+     }
+
+   }
+
+ }
+
+
+ /*
+  Fallback:
+
+  mailto cannot attach a local file,
+  so put the history into the email body.
+ */
+
+ const subject=
+   encodeURIComponent("Office History");
+
+ const body=
+   encodeURIComponent(historyText);
+
+ window.location.href=
+   `mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`;
+
+ closeMailModal();
 
 }
 
