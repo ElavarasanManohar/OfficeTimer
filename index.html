@@ -190,18 +190,17 @@ body{
   bottom:20px;
   width:100%;
   display:flex;
-  gap:8px;
+  gap:10px;
   padding:10px;
 }
 
 .bottom-bar button{
   flex:1;
-  padding:18px 8px;
-  font-size:15px;
+  padding:18px;
+  font-size:16px;
   border-radius:16px;
   border:none;
   background:var(--card);
-  font-family:monospace;
 }
 
 .bottom-bar button:disabled{
@@ -213,7 +212,7 @@ body{
   background:#d9ead3 !important;
 }
 
-/* MODAL */
+/* HISTORY MODAL */
 .modal{
   position:fixed;
   inset:0;
@@ -232,6 +231,30 @@ body{
   overflow-y:auto;
 }
 
+/* HISTORY HEADER */
+.history-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.history-header h3{
+  margin:0;
+}
+
+.history-header .mail-btn{
+  flex:none;
+  padding:10px 14px;
+  border-radius:12px;
+  border:1px solid #ccc;
+  font-family:monospace;
+  font-size:13px;
+  background:#d9ead3;
+}
+
+/* WEEK HEADING */
 .history-week{
   margin-top:20px;
   margin-bottom:12px;
@@ -386,13 +409,13 @@ body{
 
 @media(max-width:380px){
 
-  .bottom-bar button{
-    font-size:13px;
-    padding:16px 5px;
+  .history-header{
+    gap:6px;
   }
 
-  .entryTimeContainer{
-    font-size:13px;
+  .history-header .mail-btn{
+    padding:9px 10px;
+    font-size:12px;
   }
 
 }
@@ -455,10 +478,6 @@ body{
     EXIT
   </button>
 
-  <button class="mail-btn" onclick="openMailModal()">
-    📧 MAIL IT
-  </button>
-
 </div>
 
 
@@ -468,7 +487,15 @@ body{
 
   <div class="modal-content" onclick="event.stopPropagation()">
 
-    <h3>OFFICE LOG 🪪</h3>
+    <div class="history-header">
+
+      <h3>OFFICE LOG 🪪</h3>
+
+      <button class="mail-btn" onclick="openMailModal()">
+        📧 MAIL IT
+      </button>
+
+    </div>
 
     <div id="historyList"></div>
 
@@ -670,13 +697,11 @@ setInterval(updateClock,1000);
 /*
  IMPORTANT:
 
- DO NOT CHANGE THESE STORAGE KEYS.
+ These are the SAME existing
+ localStorage keys.
 
- Existing browser data continues using:
-
- officeData
- todayEnter
- officeStatus
+ Existing browser data will
+ continue to use these keys.
 */
 
 const today=new Date().toISOString().split("T")[0];
@@ -742,11 +767,9 @@ function calculateTotal(enter,exit){
 }
 
 
-/*
- Calculate live time spent from
- the actual timestamp saved when
- ENTER was clicked.
-*/
+/* =========================
+   LIVE TIME SPENT
+========================= */
 
 function calculateLiveTime(){
 
@@ -773,10 +796,6 @@ function calculateLiveTime(){
 }
 
 
-/* =========================
-   LIVE ENTRY TIMER
-========================= */
-
 let liveTimer=null;
 
 
@@ -795,13 +814,6 @@ function updateLiveEntryTime(){
 
 }
 
-
-/*
- Updates every second.
-
- This means refreshing the browser
- does NOT reset the timer.
-*/
 
 function startLiveTimer(){
 
@@ -842,17 +854,11 @@ function enterOffice(){
 
  const now=new Date();
 
- /*
-  SAME existing key.
- */
  localStorage.setItem(
    "todayEnter",
    now.getTime()
  );
 
- /*
-  SAME existing key.
- */
  localStorage.setItem(
    "officeStatus",
    "IN"
@@ -916,17 +922,11 @@ function exitOffice(){
 
  });
 
- /*
-  SAME existing storage.
- */
  localStorage.setItem(
    "officeData",
    JSON.stringify(officeData)
  );
 
- /*
-  SAME existing status storage.
- */
  localStorage.setItem(
    "officeStatus",
    "OUT"
@@ -942,6 +942,8 @@ function exitOffice(){
 
  statusText.innerText=
    "Click enter to Log ⬇️";
+
+ document.querySelector(".entryTime").innerText="";
 
  document.querySelector(".timeSpent").innerText=
    "00:00";
@@ -970,11 +972,6 @@ function toggleHistory(){
 /* =========================
    WEEK CALCULATION
 ========================= */
-
-
-/*
- Monday = start of week.
-*/
 
 function getWeekStart(dateString){
 
@@ -1036,13 +1033,6 @@ function renderHistory(){
 
  }
 
-
- /*
-  Group existing records by week.
-
-  No records are modified.
- */
-
  const grouped={};
 
  officeData.forEach((record,index)=>{
@@ -1066,10 +1056,6 @@ function renderHistory(){
  });
 
 
- /*
-  Newest week first.
- */
-
  const weekKeys=
    Object.keys(grouped).sort().reverse();
 
@@ -1084,10 +1070,6 @@ function renderHistory(){
 
    `;
 
-
-   /*
-    Newest record first inside each week.
-   */
 
    grouped[weekKey]
    .slice()
@@ -1128,7 +1110,7 @@ function renderHistory(){
 
 
 /* =========================
-   OPEN EDIT
+   EDIT
 ========================= */
 
 let editingIndex=null;
@@ -1153,10 +1135,6 @@ function openEdit(index){
 
 }
 
-
-/* =========================
-   CONVERT 12-HOUR TIME
-========================= */
 
 function convertTo24Hour(time){
 
@@ -1193,10 +1171,6 @@ function convertTo24Hour(time){
 }
 
 
-/* =========================
-   CONVERT 24-HOUR TO 12-HOUR
-========================= */
-
 function convertTo12Hour(time){
 
  const [hours,minutes]=time.split(":").map(Number);
@@ -1209,10 +1183,6 @@ function convertTo12Hour(time){
 
 }
 
-
-/* =========================
-   SAVE EDIT
-========================= */
 
 function saveEdit(){
 
@@ -1241,11 +1211,6 @@ function saveEdit(){
 
  }
 
-
- /*
-  Update the SAME existing record.
- */
-
  officeData[editingIndex].date=date;
 
  officeData[editingIndex].enter=
@@ -1256,11 +1221,6 @@ function saveEdit(){
 
  officeData[editingIndex].total=
    calculateTotal(enter,exit);
-
-
- /*
-  SAME officeData localStorage key.
- */
 
  localStorage.setItem(
    "officeData",
@@ -1275,10 +1235,6 @@ function saveEdit(){
 
 }
 
-
-/* =========================
-   CLOSE EDIT
-========================= */
 
 function closeEdit(){
 
@@ -1327,7 +1283,7 @@ if(localStorage.getItem("officeStatus")==="IN"){
 
 
 /* =========================
-   MAIL HISTORY
+   MAIL
 ========================= */
 
 function openMailModal(){
@@ -1364,9 +1320,7 @@ function createHistoryText(){
 
  }
 
-
  const grouped={};
-
 
  officeData.forEach(record=>{
 
@@ -1453,10 +1407,6 @@ async function sendHistoryByMail(){
  }
 
 
- /*
-  Basic email validation.
- */
-
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
 
    alert("Please enter a valid email address.");
@@ -1471,7 +1421,7 @@ async function sendHistoryByMail(){
 
 
  /*
-  Create a real TXT attachment.
+  Create history attachment.
  */
 
  const file=new File(
@@ -1488,12 +1438,10 @@ async function sendHistoryByMail(){
 
 
  /*
-  Modern phones/browsers can share the
-  generated file directly to Mail.
-
-  This is the only browser-safe way to
-  provide an actual attachment without
-  a backend/server.
+  On supported mobile browsers,
+  this opens the share sheet and
+  allows the Mail app to receive
+  the TXT attachment.
  */
 
  if(
@@ -1523,10 +1471,6 @@ async function sendHistoryByMail(){
 
    }catch(error){
 
-     /*
-      User cancelled the share sheet.
-     */
-
      if(error.name==="AbortError"){
 
        return;
@@ -1539,10 +1483,12 @@ async function sendHistoryByMail(){
 
 
  /*
-  Fallback:
+  Fallback for browsers without
+  file sharing.
 
-  mailto cannot attach a local file,
-  so put the history into the email body.
+  mailto cannot attach files,
+  so the history is placed in
+  the email body.
  */
 
  const subject=
