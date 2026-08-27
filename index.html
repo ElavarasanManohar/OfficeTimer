@@ -258,12 +258,22 @@ body{
 .history-week{
   margin-top:20px;
   margin-bottom:12px;
-  padding:10px;
+  padding:10px 12px;
   background:#111;
   color:#fff;
   border-radius:12px;
   font-weight:bold;
   text-align:center;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+}
+
+.week-total{
+  color:#63bc9e;
+  white-space:nowrap;
 }
 
 .history-item{
@@ -418,6 +428,11 @@ body{
     font-size:12px;
   }
 
+  .history-week{
+    font-size:10px;
+    padding:9px 8px;
+  }
+
 }
 </style>
 </head>
@@ -513,15 +528,12 @@ body{
     <h3>EDIT OFFICE LOG ✏️</h3>
 
     <label for="editDate">Date</label>
-
     <input type="date" id="editDate">
 
     <label for="editEnter">Enter time</label>
-
     <input type="time" id="editEnter">
 
     <label for="editExit">Exit time</label>
-
     <input type="time" id="editExit">
 
     <div class="edit-buttons">
@@ -697,11 +709,14 @@ setInterval(updateClock,1000);
 /*
  IMPORTANT:
 
- These are the SAME existing
- localStorage keys.
+ SAME EXISTING localStorage KEYS:
 
- Existing browser data will
- continue to use these keys.
+ officeData
+ todayEnter
+ officeStatus
+
+ No existing storage is cleared
+ or renamed.
 */
 
 const today=new Date().toISOString().split("T")[0];
@@ -973,6 +988,12 @@ function toggleHistory(){
    WEEK CALCULATION
 ========================= */
 
+
+/*
+ Monday is the first day of
+ the week.
+*/
+
 function getWeekStart(dateString){
 
  const d=new Date(dateString+"T00:00:00");
@@ -1017,6 +1038,47 @@ function formatWeekHeading(dateString){
 
 
 /* =========================
+   WEEK TOTAL
+========================= */
+
+
+/*
+ Calculates the total office
+ hours for all records in one week.
+
+ This does NOT modify localStorage.
+ It only reads existing totals.
+*/
+
+function calculateWeekTotal(records){
+
+ let totalMinutes=0;
+
+ records.forEach(item=>{
+
+   const total=
+     item.record
+       ? item.record.total
+       : item.total;
+
+   if(!total) return;
+
+   const parts=total.split(":");
+
+   if(parts.length!==2) return;
+
+   totalMinutes +=
+     Number(parts[0])*60 +
+     Number(parts[1]);
+
+ });
+
+ return `${String(Math.floor(totalMinutes/60)).padStart(2,"0")}:${String(totalMinutes%60).padStart(2,"0")}`;
+
+}
+
+
+/* =========================
    RENDER HISTORY
 ========================= */
 
@@ -1033,7 +1095,9 @@ function renderHistory(){
 
  }
 
+
  const grouped={};
+
 
  officeData.forEach((record,index)=>{
 
@@ -1056,20 +1120,46 @@ function renderHistory(){
  });
 
 
+ /*
+  Newest week first.
+ */
+
  const weekKeys=
    Object.keys(grouped).sort().reverse();
 
 
  weekKeys.forEach(weekKey=>{
 
+
+   const weekTotal=
+     calculateWeekTotal(grouped[weekKey]);
+
+
+   /*
+    WEEK HEADING + WEEK TOTAL
+   */
+
    historyList.innerHTML+=`
 
      <div class="history-week">
-       ${formatWeekHeading(weekKey)}
+
+       <span>
+         ${formatWeekHeading(weekKey)}
+       </span>
+
+       <span class="week-total">
+         TOTAL: ${weekTotal}
+       </span>
+
      </div>
 
    `;
 
+
+   /*
+    Newest record first inside
+    each week.
+   */
 
    grouped[weekKey]
    .slice()
@@ -1211,6 +1301,11 @@ function saveEdit(){
 
  }
 
+
+ /*
+  Update the SAME existing record.
+ */
+
  officeData[editingIndex].date=date;
 
  officeData[editingIndex].enter=
@@ -1221,6 +1316,11 @@ function saveEdit(){
 
  officeData[editingIndex].total=
    calculateTotal(enter,exit);
+
+
+ /*
+  SAME officeData localStorage key.
+ */
 
  localStorage.setItem(
    "officeData",
@@ -1320,7 +1420,9 @@ function createHistoryText(){
 
  }
 
+
  const grouped={};
+
 
  officeData.forEach(record=>{
 
@@ -1348,14 +1450,24 @@ function createHistoryText(){
 
  weekKeys.forEach(weekKey=>{
 
-   text+=formatWeekHeading(weekKey);
+   const weekRecords=
+     grouped[weekKey];
 
-   text+="\n";
+   const weekTotal=
+     calculateWeekTotal(weekRecords);
 
-   text+="------------------------------\n";
+
+   text+=
+     `${formatWeekHeading(weekKey)}\n`;
+
+   text+=
+     `TOTAL: ${weekTotal}\n`;
+
+   text+=
+     "------------------------------\n";
 
 
-   grouped[weekKey]
+   weekRecords
    .slice()
    .reverse()
    .forEach(record=>{
@@ -1440,8 +1552,8 @@ async function sendHistoryByMail(){
  /*
   On supported mobile browsers,
   this opens the share sheet and
-  allows the Mail app to receive
-  the TXT attachment.
+  allows Mail to receive the
+  generated TXT file.
  */
 
  if(
@@ -1483,11 +1595,10 @@ async function sendHistoryByMail(){
 
 
  /*
-  Fallback for browsers without
-  file sharing.
+  Fallback:
 
   mailto cannot attach files,
-  so the history is placed in
+  so history is placed in
   the email body.
  */
 
